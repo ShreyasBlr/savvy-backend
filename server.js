@@ -16,10 +16,19 @@ connectDB();
 
 const app = express();
 
-// CORS middleware for handling cross-origin requests
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+const CORS_Origin = () => {
+  if (process.env.NODE_ENV === "staging") {
+    return "https://kharchu.onrender.com";
+  }
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3000";
+  }
+  return "https://crm-crm-organization-frontend.0cchfy.easypanel.host";
+};
+
+app.use(cors({ credentials: true, origin: CORS_Origin() }));
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Origin", CORS_Origin());
   res.header("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
   res.header(

@@ -10,6 +10,14 @@ const getUserCategories = asyncHandler(async (req, res) => {
   res.status(200).json(categories);
 });
 
+// @desc    Get categories of user by id
+// @route   GET /categories/:id
+// @access  Private
+const getUserCategoryById = asyncHandler(async (req, res) => {
+  const categories = await categoryServices.getUserCategoryById(req, res);
+  res.status(200).json(categories);
+});
+
 // @desc    Add new categories of user
 // @route   POST /categories
 // @access  Private
@@ -53,6 +61,7 @@ const deleteUserCategory = asyncHandler(async (req, res) => {
 
 export {
   getUserCategories,
+  getUserCategoryById,
   addUserCategory,
   updateUserCategory,
   deleteUserCategory,

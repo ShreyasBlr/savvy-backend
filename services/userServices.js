@@ -55,7 +55,7 @@ const getUserProfile = async (req, res) => {
   if (user) {
     return {
       _id: user._id,
-      name: user.full_name,
+      name: user.name,
       email: user.email,
       mobile: user.mobile,
       avatar_url: user.avatar_url,
@@ -83,7 +83,7 @@ const updateUserProfile = async (req, res) => {
     const updatedUser = await user.save();
     return {
       _id: updatedUser._id,
-      name: updatedUser.full_name,
+      name: updateduser.name,
       email: updatedUser.email,
       mobile: updatedUser.mobile,
       avatar_url: updatedUser.avatar_url,

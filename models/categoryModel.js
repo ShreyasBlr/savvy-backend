@@ -15,6 +15,14 @@ const categorySchema = new mongoose.Schema({
     required: true,
     ref: "User",
   },
+  budget: {
+    type: Number,
+    required: true,
+  },
+  remaining: {
+    type: Number,
+    required: true,
+  },
 });
 
 const Category = mongoose.model("Category", categorySchema);

@@ -10,6 +10,7 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 import userRoutes from "./routes/userRoutes.js";
 import categoriesRoutes from "./routes/categoryRoutes.js";
+import transactionRoutes from "./routes/transactionRoutes.js";
 
 const port = process.env.PORT || 5200;
 connectDB();
@@ -51,6 +52,7 @@ app.get("/", (req, res) => {
 
 app.use("/users", userRoutes);
 app.use("/categories", categoriesRoutes);
+app.use("/transactions", transactionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

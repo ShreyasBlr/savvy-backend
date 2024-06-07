@@ -15,6 +15,12 @@ const getUserCategories = async (req, res) => {
   return categories;
 };
 
+const getUserCategoryById = async (req, res) => {
+  const query = { _id: req.params.id, user: req.user._id };
+  const categories = await Category.findOne(query);
+  return categories;
+};
+
 const addUserCategory = async (req, res) => {
   const category = await Category.findOne({
     cat_type: req.body.cat_type,
@@ -28,6 +34,8 @@ const addUserCategory = async (req, res) => {
       cat_type: req.body.cat_type,
       name: req.body.name,
       user: req.user._id,
+      budget: req.body.budget,
+      remaining: req.body.budget,
     });
     return newCategory;
   }
@@ -41,6 +49,10 @@ const updateUserCategory = async (req, res) => {
   } else {
     category.cat_type = req.body.cat_type || category.cat_type;
     category.name = req.body.name || category.name;
+    category.remaining = req.body.budget
+      ? req.body.budget - (category.budget - category.remaining)
+      : category.remaining;
+    category.budget = req.body.budget || category.budget;
     await category.save();
     return category;
   }
@@ -61,6 +73,7 @@ const deleteUserCategory = async (req, res) => {
 
 export default {
   getUserCategories,
+  getUserCategoryById,
   addUserCategory,
   updateUserCategory,
   deleteUserCategory,

@@ -4,6 +4,7 @@ import {
   addUserCategory,
   deleteUserCategory,
   getUserCategories,
+  getUserCategoryById,
   updateUserCategory,
 } from "../controllers/categoriesController.js";
 
@@ -16,6 +17,7 @@ router
 
 router
   .route("/:id")
+  .get(protect, getUserCategoryById)
   .put(protect, updateUserCategory)
   .delete(protect, deleteUserCategory);
 

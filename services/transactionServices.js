@@ -9,7 +9,7 @@ const getTransactions = async (req, res) => {
   } else if (expense === "true" && income !== "true") {
     query.transaction_type = "expense";
   }
-  return await Transaction.find(query);
+  return await Transaction.find(query).populate("category");
 };
 
 const createTransaction = async (req, res) => {

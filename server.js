@@ -39,6 +39,8 @@ app.use(function (req, res, next) {
   next();
 });
 
+console.log(`Allowed origin is ${CORS_Origin()}`);
+
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -24,7 +24,7 @@ const CORS_Origin = () => {
   if (process.env.NODE_ENV === "development") {
     return "http://localhost:3000";
   }
-  return "https://kharchu.onrender.com";
+  return "https://savvy-app.t8r1wc.easypanel.host";
 };
 
 app.use(cors({ credentials: true, origin: CORS_Origin() }));

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Category from "../models/categoryModel.js";
 import Transaction from "../models/transactionModel.js";
 
@@ -101,9 +102,52 @@ const deleteTransaction = async (req, res) => {
   return transaction;
 };
 
+const getMonthlySummary = async (req, res) => {
+  const startOfMonth = new Date(new Date().setDate(1)); // First day of the current month
+  const endOfMonth = new Date(
+    new Date().setMonth(new Date().getMonth() + 1, 0)
+  ); // Last day of the current month
+
+  const totals = await Transaction.aggregate([
+    {
+      $match: {
+        user: mongoose.Types.ObjectId.createFromHexString(req.user.id),
+        date: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$transaction_type",
+        totalAmount: { $sum: "$amount" },
+      },
+    },
+  ]);
+
+  // Initialize the result object with default values
+  const result = {
+    income: 0,
+    expense: 0,
+  };
+
+  // Populate the result object based on the aggregation results
+  totals.forEach((item) => {
+    if (item._id === "income") {
+      result.income = item.totalAmount;
+    } else if (item._id === "expense") {
+      result.expense = item.totalAmount;
+    }
+  });
+
+  return result;
+};
+
 export default {
   getTransactions,
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getMonthlySummary,
 };

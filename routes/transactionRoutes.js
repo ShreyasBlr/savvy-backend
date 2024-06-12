@@ -6,6 +6,7 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getMonthlySummary,
 } from "../controllers/transactionController.js";
 
 const router = express.Router();
@@ -19,5 +20,7 @@ router
   .route("/:id")
   .put(protect, updateTransaction)
   .delete(protect, deleteTransaction);
+
+router.get("/monthly-summary", protect, getMonthlySummary);
 
 export default router;

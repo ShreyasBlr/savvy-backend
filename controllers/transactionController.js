@@ -53,9 +53,26 @@ const deleteTransaction = asyncHandler(async (req, res) => {
   res.status(200).json(transaction);
 });
 
+// @desc    Get Totals for current month
+// @route   GET /transactions/monthly-summary
+// @access  Private
+const getMonthlySummary = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("User not found!");
+  }
+  const transaction = await transactionServices.getMonthlySummary(req, res);
+  if (!transaction) {
+    res.status(401);
+    throw new Error("Invalid transaction data!");
+  }
+  res.status(200).json(transaction);
+});
+
 export {
   getTransactions,
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getMonthlySummary,
 };

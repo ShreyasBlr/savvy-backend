@@ -16,7 +16,7 @@ const categorySchema = new mongoose.Schema({
     ref: "User",
   },
   budget: {
-    type: Number,
+    type: mongoose.Schema.Types.Decimal128,
     required: true,
   },
 });

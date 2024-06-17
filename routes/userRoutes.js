@@ -9,6 +9,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  updateUserStartingBalance,
 } from "../controllers/userController.js";
 
 import { protect, admin } from "../middleware/authMiddleware.js";
@@ -20,6 +21,8 @@ router.post("/login", authUser);
 router.post("/logout", logoutUser);
 
 router.route("/").get(protect, getUsers);
+
+router.route("/starting-balance").post(protect, updateUserStartingBalance);
 
 router
   .route("/profile")

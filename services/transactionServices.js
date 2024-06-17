@@ -1,30 +1,37 @@
 import mongoose from "mongoose";
-import Category from "../models/categoryModel.js";
 import Transaction from "../models/transactionModel.js";
+import User from "../models/userModel.js";
 
 const getTransactions = async (req, res) => {
-  const { income, expense } = req.query;
+  const { income, expense, limit } = req.query;
+
   const query = { user: req.user._id };
+
   if (income === "true" && expense !== "true") {
     query.transaction_type = "income";
   } else if (expense === "true" && income !== "true") {
     query.transaction_type = "expense";
   }
+
+  if (limit) {
+    return await Transaction.find(query).limit(limit).populate("category");
+  }
   return await Transaction.find(query).populate("category");
 };
 
 const createTransaction = async (req, res) => {
-  const category = await Category.findById(req.body.category);
-  if (!category) {
+  const user = await User.findById(req.user.id);
+  if (!user) {
     res.status(404);
-    throw new Error("Category not found!");
+    throw new Error("User not found!");
   }
   if (req.body.transaction_type === "income") {
-    category.remaining = category.remaining + +req.body.amount;
+    user.totalBalance = +user.totalBalance.toString() + +req.body.amount;
   } else if (req.body.transaction_type === "expense") {
-    category.remaining = category.remaining - +req.body.amount;
+    user.totalBalance = +user.totalBalance.toString() - +req.body.amount;
   }
-  await category.save();
+  await user.save();
+
   return await Transaction.create({
     transaction_type: req.body.transaction_type,
     category: req.body.category,
@@ -43,22 +50,22 @@ const updateTransaction = async (req, res) => {
   }
 
   if (req.body.amount) {
-    const category = await Category.findById(transaction.category);
+    const user = await User.findById(req.user.id);
 
-    if (!category) {
+    if (!user) {
       res.status(404);
-      throw new Error("Category not found!");
+      throw new Error("User not found!");
     }
 
     if (transaction.transaction_type === "income") {
-      category.remaining = category.remaining - +transaction.amount;
-      category.remaining = category.remaining + +req.body.amount;
+      user.totalBalance = +user.totalBalance.toString() - +transaction.amount;
+      user.totalBalance = +user.totalBalance.toString() + +req.body.amount;
     } else if (req.body.transaction_type === "expense") {
-      category.remaining = category.remaining + +transaction.amount;
-      category.remaining = category.remaining - +req.body.amount;
+      user.totalBalance = +user.totalBalance.toString() + +transaction.amount;
+      user.totalBalance = +user.totalBalance.toString() - +req.body.amount;
     }
 
-    await category.save();
+    await user.save();
   }
 
   transaction.transaction_type =
@@ -81,18 +88,18 @@ const deleteTransaction = async (req, res) => {
     throw new Error("Transaction not found!");
   }
 
-  const category = await Category.findById(transaction.category);
-  if (!category) {
+  const user = await User.findById(req.user.id);
+  if (!user) {
     res.status(404);
-    throw new Error("Category not found!");
+    throw new Error("User not found!");
   }
 
   if (transaction.transaction_type === "income") {
-    category.remaining = category.remaining - +transaction.amount;
+    user.totalBalance = +user.totalBalance.toString() - +transaction.amount;
   } else if (transaction.transaction_type === "expense") {
-    category.remaining = category.remaining + +transaction.amount;
+    user.totalBalance = +user.totalBalance.toString() + +transaction.amount;
   }
-  await category.save();
+  await user.save();
 
   await Transaction.findOneAndDelete({
     _id: req.params.id,
@@ -126,10 +133,21 @@ const getMonthlySummary = async (req, res) => {
     },
   ]);
 
+  // User balance
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found!");
+  }
+  const totalBalance = +user.totalBalance.toString();
+  const startingBalance = +user.startingBalance.toString();
+
   // Initialize the result object with default values
   const result = {
     income: 0,
     expense: 0,
+    totalBalance,
+    startingBalance,
   };
 
   // Populate the result object based on the aggregation results

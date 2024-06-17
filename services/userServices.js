@@ -83,11 +83,37 @@ const updateUserProfile = async (req, res) => {
     const updatedUser = await user.save();
     return {
       _id: updatedUser._id,
-      name: updateduser.name,
+      name: updatedUser.name,
       email: updatedUser.email,
       mobile: updatedUser.mobile,
       avatar_url: updatedUser.avatar_url,
       status: updatedUser.status,
+    };
+  } else {
+    return false;
+  }
+};
+
+const updateUserStartingBalance = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!req.body.startingBalance) {
+    res.status(400);
+    throw new Error("Please add a starting balance");
+  }
+
+  if (user) {
+    const oldBalance = +user.startingBalance.toString();
+    const newTotal =
+      +user.totalBalance.toString() - oldBalance + +req.body.startingBalance;
+    user.startingBalance = req.body.startingBalance || user.startingBalance;
+    user.totalBalance = newTotal;
+
+    const updatedUser = await user.save();
+
+    return {
+      _id: updatedUser._id,
+      startingBalance: updatedUser.startingBalance,
     };
   } else {
     return false;
@@ -139,6 +165,7 @@ export default {
   registerUser,
   getUserProfile,
   updateUserProfile,
+  updateUserStartingBalance,
   getUsers,
   getUserById,
   updateUser,

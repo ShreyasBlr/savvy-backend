@@ -80,6 +80,25 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Update user starting balance
+// @route   POST /users/starting-balance
+// @access  Private
+const updateUserStartingBalance = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("User not found");
+  }
+
+  const user = await userServices.updateUserStartingBalance(req, res);
+
+  if (user) {
+    res.status(200).json(user);
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
 // @desc    Get all users
 // @route   GET /users/
 // @access  Private / admin
@@ -140,6 +159,7 @@ export {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  updateUserStartingBalance,
   getUsers,
   getUserById,
   updateUser,

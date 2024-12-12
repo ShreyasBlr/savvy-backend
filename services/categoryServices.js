@@ -1,67 +1,61 @@
 import Category from "../models/categoryModel.js";
 
-const getUserCategories = async (req, res) => {
-  const { income, expense } = req.query;
-
-  const query = { user: req.user._id };
+const getUserCategories = async (userId, income, expense) => {
+  const query = { user: userId };
 
   if (income === "true" && expense !== "true") {
-    query.cat_type = "income";
+    query.type = "income";
   } else if (expense === "true" && income !== "true") {
-    query.cat_type = "expense";
+    query.type = "expense";
   }
 
   const categories = await Category.find(query);
   return categories;
 };
 
-const getUserCategoryById = async (req, res) => {
-  const query = { _id: req.params.id, user: req.user._id };
+const getUserCategoryById = async (categoryId, userId) => {
+  const query = { _id: categoryId, user: userId };
   const categories = await Category.findOne(query);
   return categories;
 };
 
-const addUserCategory = async (req, res) => {
+const addUserCategory = async (userId, data) => {
   const category = await Category.findOne({
-    cat_type: req.body.cat_type,
-    name: req.body.name,
+    user: userId,
+    type: data.type,
+    name: data.name,
   });
   if (category) {
-    res.status(401);
     throw new Error("Category already exists!");
   } else {
     const newCategory = await Category.create({
-      cat_type: req.body.cat_type,
-      name: req.body.name,
-      user: req.user._id,
-      budget: req.body.budget,
-      remaining: req.body.budget,
+      user: userId,
+      name: data.name,
+      type: data.type,
+      plannedAmount: data.plannedAmount,
     });
     return newCategory;
   }
 };
 
-const updateUserCategory = async (req, res) => {
-  const category = await Category.findById(req.params.id);
-  if (!category || category.user.toString() !== req.user._id.toString()) {
-    res.status(404);
+const updateUserCategory = async (userId, categoryId, data) => {
+  const category = await Category.findById(categoryId);
+  if (!category || category.user.toString() !== userId.toString()) {
     throw new Error("Category not found!");
   } else {
-    category.cat_type = req.body.cat_type || category.cat_type;
-    category.name = req.body.name || category.name;
-    category.remaining = req.body.budget
-      ? req.body.budget - (category.budget - category.remaining)
-      : category.remaining;
-    category.budget = req.body.budget || category.budget;
+    category.name = data.name || category.name;
+    category.type = data.type || category.type;
+    category.plannedAmount = data.plannedAmount || category.plannedAmount;
+    category.currentAmount = data.currentAmount || category.currentAmount;
     await category.save();
     return category;
   }
 };
 
-const deleteUserCategory = async (req, res) => {
+const deleteUserCategory = async (userId, categoryId) => {
   const category = await Category.findOneAndDelete({
-    _id: req.params.id,
-    user: req.user._id,
+    _id: categoryId,
+    user: userId,
   });
   if (!category) {
     res.status(404);

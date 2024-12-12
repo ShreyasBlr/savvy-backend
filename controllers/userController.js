@@ -9,8 +9,8 @@ const authUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("Email and Password are required");
   }
-
-  const user = await userServices.authUser(req, res);
+  const { email, password } = req.body;
+  const user = await userServices.authUser(email, password, res);
 
   if (user) {
     res.status(200).json(user);
@@ -24,7 +24,7 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const user = await userServices.registerUser(req, res);
+  const user = await userServices.registerUser(req.body, res);
 
   if (user) {
     res.status(201).json(user);
@@ -51,7 +51,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const user = await userServices.getUserProfile(req, res);
+  const user = await userServices.getUserProfile(req.user._id);
 
   if (user) {
     res.status(200).json(user);
@@ -70,7 +70,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const user = await userServices.updateUserProfile(req, res);
+  const user = await userServices.updateUserProfile(req.user._id, req.body);
 
   if (user) {
     res.status(200).json(user);
@@ -89,7 +89,10 @@ const updateUserStartingBalance = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  const user = await userServices.updateUserStartingBalance(req, res);
+  const user = await userServices.updateUserStartingBalance(
+    req.user._id,
+    req.body.startingBalance
+  );
 
   if (user) {
     res.status(200).json(user);
@@ -103,7 +106,7 @@ const updateUserStartingBalance = asyncHandler(async (req, res) => {
 // @route   GET /users/
 // @access  Private / admin
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await userServices.getUsers(req, res);
+  const users = await userServices.getUsers();
   res.status(200).json(users);
 });
 
@@ -115,7 +118,7 @@ const getUserById = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("User ID is required");
   }
-  const user = await userServices.getUserById(req, res);
+  const user = await userServices.getUserById(req.params.id);
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -127,7 +130,7 @@ const getUserById = asyncHandler(async (req, res) => {
 // @route   PUT /users/:id
 // @access  Private / admin
 const updateUser = asyncHandler(async (req, res) => {
-  const updatedUser = await userServices.updateUser(req, res);
+  const updatedUser = await userServices.updateUser(req.params.id, req.body);
 
   if (updatedUser) {
     res.status(200).json(updatedUser);
@@ -145,7 +148,7 @@ const deleteUser = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error("User ID is required");
   }
-  const user = await userServices.deleteUser(req, res);
+  const user = await userServices.deleteUser(req.params.id);
   if (!user) {
     res.status(404);
     throw new Error("User not found");

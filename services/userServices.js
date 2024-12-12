@@ -1,9 +1,7 @@
 import User from "../models/userModel.js";
 import generateToken from "../utlis/generateToken.js";
 
-const authUser = async (req, res) => {
-  const { email, password } = req.body; // destructuring
-
+const authUser = async (email, password, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
@@ -16,22 +14,24 @@ const authUser = async (req, res) => {
       mobile: user.mobile,
       avatar_url: user.avatar_url,
       status: user.status,
+      startingBalance: user.startingBalance,
+      previousBalance: user.previousBalance,
+      financialMonthStartDate: user.financialMonthStartDate,
     };
   } else {
     return false;
   }
 };
 
-const registerUser = async (req, res) => {
-  const { email } = req.body;
+const registerUser = async (data, res) => {
+  const { email } = data;
   const userExists = await User.findOne({ email });
   if (userExists) {
-    res.status(400);
     throw new Error("User already exists");
   }
 
   const user = await User.create({
-    ...req.body,
+    ...data,
   });
 
   if (user) {
@@ -43,14 +43,17 @@ const registerUser = async (req, res) => {
       mobile: user.mobile,
       avatar_url: user.avatar_url,
       status: user.status,
+      startingBalance: user.startingBalance,
+      previousBalance: user.previousBalance,
+      financialMonthStartDate: user.financialMonthStartDate,
     };
   } else {
     return false;
   }
 };
 
-const getUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+const getUserProfile = async (userId) => {
+  const user = await User.findById(userId);
 
   if (user) {
     return {
@@ -60,24 +63,31 @@ const getUserProfile = async (req, res) => {
       mobile: user.mobile,
       avatar_url: user.avatar_url,
       status: user.status,
+      startingBalance: user.startingBalance,
+      previousBalance: user.previousBalance,
+      financialMonthStartDate: user.financialMonthStartDate,
     };
   } else {
     return false;
   }
 };
 
-const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+const updateUserProfile = async (userId, data) => {
+  const user = await User.findById(userId);
 
   if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    user.mobile = req.body.mobile || user.mobile;
-    user.avatar_url = req.body.avatar_url || user.avatar_url;
-    user.status = req.body.status || user.status;
+    user.name = data.name || user.name;
+    user.email = data.email || user.email;
+    user.mobile = data.mobile || user.mobile;
+    user.avatar_url = data.avatar_url || user.avatar_url;
+    user.status = data.status || user.status;
+    user.startingBalance = data.startingBalance || user.startingBalance;
+    user.previousBalance = data.previousBalance || user.previousBalance;
+    user.financialMonthStartDate =
+      data.financialMonthStartDate || user.financialMonthStartDate;
 
-    if (req.body.password) {
-      user.password = req.body.password;
+    if (data.password) {
+      user.password = data.password;
     }
 
     const updatedUser = await user.save();
@@ -88,25 +98,27 @@ const updateUserProfile = async (req, res) => {
       mobile: updatedUser.mobile,
       avatar_url: updatedUser.avatar_url,
       status: updatedUser.status,
+      startingBalance: updatedUser.startingBalance,
+      previousBalance: updatedUser.previousBalance,
+      financialMonthStartDate: updatedUser.financialMonthStartDate,
     };
   } else {
     return false;
   }
 };
 
-const updateUserStartingBalance = async (req, res) => {
-  const user = await User.findById(req.user._id);
+const updateUserStartingBalance = async (userId, startingBalance) => {
+  const user = await User.findById(userId);
 
-  if (!req.body.startingBalance) {
-    res.status(400);
+  if (!startingBalance) {
     throw new Error("Please add a starting balance");
   }
 
   if (user) {
     const oldBalance = +user.startingBalance.toString();
     const newTotal =
-      +user.totalBalance.toString() - oldBalance + +req.body.startingBalance;
-    user.startingBalance = req.body.startingBalance || user.startingBalance;
+      +user.totalBalance.toString() - oldBalance + +startingBalance;
+    user.startingBalance = startingBalance || user.startingBalance;
     user.totalBalance = newTotal;
 
     const updatedUser = await user.save();
@@ -120,26 +132,30 @@ const updateUserStartingBalance = async (req, res) => {
   }
 };
 
-const getUsers = async (req, res) => {
+const getUsers = async () => {
   return await User.find({}).select("-password");
 };
 
-const getUserById = async (req, res) => {
-  return await User.findById(req.params.id).select("-password");
+const getUserById = async (userId) => {
+  return await User.findById(userId).select("-password");
 };
 
-const updateUser = async (req, res) => {
-  const user = await User.findById(req.params.id);
+const updateUser = async (userId, data) => {
+  const user = await User.findById(userId);
 
   if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    user.mobile = req.body.mobile || user.mobile;
-    user.avatar_url = req.body.avatar_url || user.avatar_url;
-    user.status = req.body.status || user.status;
+    user.name = data.name || user.name;
+    user.email = data.email || user.email;
+    user.mobile = data.mobile || user.mobile;
+    user.avatar_url = data.avatar_url || user.avatar_url;
+    user.status = data.status || user.status;
+    user.startingBalance = data.startingBalance || user.startingBalance;
+    user.previousBalance = data.previousBalance || user.previousBalance;
+    user.financialMonthStartDate =
+      data.financialMonthStartDate || user.financialMonthStartDate;
 
-    if (req.body.password) {
-      user.password = req.body.password;
+    if (data.password) {
+      user.password = data.password;
     }
 
     const updatedUser = await user.save();
@@ -150,14 +166,17 @@ const updateUser = async (req, res) => {
       mobile: updatedUser.mobile,
       avatar_url: updatedUser.avatar_url,
       status: updatedUser.status,
+      startingBalance: updatedUser.startingBalance,
+      previousBalance: updatedUser.previousBalance,
+      financialMonthStartDate: updatedUser.financialMonthStartDate,
     };
   } else {
     return false;
   }
 };
 
-const deleteUser = async (req, res) => {
-  return await User.deleteOne({ _id: req.params.id });
+const deleteUser = async (userId) => {
+  return await User.deleteOne({ _id: userId });
 };
 
 export default {

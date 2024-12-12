@@ -27,12 +27,14 @@ const userSchema = new mongoose.Schema({
     default: true,
   },
   startingBalance: {
-    type: mongoose.Schema.Types.Decimal128,
+    type: Number,
     default: 0,
   },
-  totalBalance: {
-    type: mongoose.Schema.Types.Decimal128,
-    default: 0,
+  financialMonthStartDate: { type: Number, default: 1 }, // 1-31, user-defined
+  previousBalance: { type: Number, default: 0 }, // Carryover from the previous month
+  isAdmin: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -45,13 +47,6 @@ userSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
-
-  if (this.isNew) {
-    this.totalBalance =
-      +this.totalBalance.toString() + +this.startingBalance.toString();
-    console.log(this.totalBalance);
-  }
-
   next();
 });
 

@@ -20,7 +20,7 @@ router.post("/register", registerUser);
 router.post("/login", authUser);
 router.post("/logout", logoutUser);
 
-router.route("/").get(protect, getUsers);
+router.route("/").get(protect, admin, getUsers);
 
 router.route("/starting-balance").post(protect, updateUserStartingBalance);
 

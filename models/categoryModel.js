@@ -1,25 +1,15 @@
 import mongoose from "mongoose";
 
-const categorySchema = new mongoose.Schema({
-  cat_type: {
-    type: String,
-    enum: ["income", "expense"],
-    required: true,
+const categorySchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    name: String,
+    type: { type: String, enum: ["income", "expense"] },
+    plannedAmount: Number,
+    currentAmount: { type: Number, default: 0 }, // Updates with transactions
   },
-  name: {
-    type: String,
-    required: true,
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: "User",
-  },
-  budget: {
-    type: mongoose.Schema.Types.Decimal128,
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
 const Category = mongoose.model("Category", categorySchema);
 

@@ -44,7 +44,7 @@ const updateUserCategory = async (userId, categoryId, data) => {
     throw new Error("Category not found!");
   } else {
     category.name = data.name || category.name;
-    category.type = data.type || category.type;
+    // category.type = data.type || category.type;
     category.plannedAmount = data.plannedAmount || category.plannedAmount;
     category.currentAmount = data.currentAmount || category.currentAmount;
     await category.save();

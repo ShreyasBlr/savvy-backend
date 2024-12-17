@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
   financialMonthStartDate: { type: Number, default: 1 }, // 1-31, user-defined
-  previousBalance: { type: Number, default: 0 }, // Carryover from the previous month
+  totalBalance: { type: Number, default: 0 },
   isAdmin: {
     type: Boolean,
     default: false,

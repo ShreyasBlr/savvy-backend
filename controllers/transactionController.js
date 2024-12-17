@@ -5,7 +5,13 @@ import transactionServices from "../services/transactionServices.js";
 // @route   GET /transactions
 // @access  Private
 const getTransactions = asyncHandler(async (req, res) => {
-  const transactions = await transactionServices.getTransactions(req, res);
+  const { income, expense, limit } = req.query;
+  const transactions = await transactionServices.getTransactions(
+    req.user._id,
+    income,
+    expense,
+    limit
+  );
   res.status(200).json(transactions);
 });
 
@@ -14,18 +20,20 @@ const getTransactions = asyncHandler(async (req, res) => {
 // @access  Private
 const createTransaction = asyncHandler(async (req, res) => {
   if (
-    !req.body.transaction_type ||
+    !req.body.type ||
     !req.body.category ||
-    !req.body.description ||
     !req.body.amount ||
     !req.body.date
   ) {
     res.status(400);
     throw new Error(
-      "Transaction Type, Category, Description, Amount, and Date are required!"
+      "Transaction Type, Category, Amount, and Date are required!"
     );
   }
-  const transaction = await transactionServices.createTransaction(req, res);
+  const transaction = await transactionServices.createTransaction(
+    req.user._id,
+    req.body
+  );
   res.status(200).json(transaction);
 });
 
@@ -33,7 +41,11 @@ const createTransaction = asyncHandler(async (req, res) => {
 // @route   PUT /transactions/:id
 // @access  Private
 const updateTransaction = asyncHandler(async (req, res) => {
-  const transaction = await transactionServices.updateTransaction(req, res);
+  const transaction = await transactionServices.updateTransaction(
+    req.user._id,
+    req.params.id,
+    req.body
+  );
   if (!transaction) {
     res.status(401);
     throw new Error("Invalid transaction data!");
@@ -45,7 +57,10 @@ const updateTransaction = asyncHandler(async (req, res) => {
 // @route   DELETE /transactions/:id
 // @access  Private
 const deleteTransaction = asyncHandler(async (req, res) => {
-  const transaction = await transactionServices.deleteTransaction(req, res);
+  const transaction = await transactionServices.deleteTransaction(
+    req.user._id,
+    req.params.id
+  );
   if (!transaction) {
     res.status(401);
     throw new Error("Invalid transaction data!");

@@ -1,16 +1,14 @@
 import mongoose from "mongoose";
 import Transaction from "../models/transactionModel.js";
 import User from "../models/userModel.js";
+import Category from "../models/categoryModel.js";
 
-const getTransactions = async (req, res) => {
-  const { income, expense, limit } = req.query;
-
-  const query = { user: req.user._id };
-
+const getTransactions = async (userId, income, expense, limit) => {
+  const query = { user: userId };
   if (income === "true" && expense !== "true") {
-    query.transaction_type = "income";
+    query.type = "income";
   } else if (expense === "true" && income !== "true") {
-    query.transaction_type = "expense";
+    query.type = "expense";
   }
 
   if (limit) {
@@ -19,91 +17,122 @@ const getTransactions = async (req, res) => {
   return await Transaction.find(query).populate("category");
 };
 
-const createTransaction = async (req, res) => {
-  const user = await User.findById(req.user.id);
+const createTransaction = async (userId, data) => {
+  const user = await User.findById(userId);
   if (!user) {
     res.status(404);
     throw new Error("User not found!");
   }
-  if (req.body.transaction_type === "income") {
-    user.totalBalance = +user.totalBalance.toString() + +req.body.amount;
-  } else if (req.body.transaction_type === "expense") {
-    user.totalBalance = +user.totalBalance.toString() - +req.body.amount;
+
+  // if (req.body.type === "income") {
+  //   user.totalBalance = +user.totalBalance.toString() + +req.body.amount;
+  // } else if (req.body.type === "expense") {
+  //   user.totalBalance = +user.totalBalance.toString() - +req.body.amount;
+  // }
+  // await user.save();
+
+  const category = await Category.findOne({
+    user: userId,
+    type: data.type,
+    _id: data.category,
+  });
+
+  if (!category) {
+    throw new Error("Category not found!");
+  }
+
+  const transaction = await Transaction.create({
+    user: userId,
+    category: data.category,
+    type: data.type,
+    amount: +data.amount,
+    description: data.description,
+    date: data.date,
+  });
+
+  // Update category currentAmount
+  category.currentAmount += +data.amount;
+  await category.save();
+
+  // Update user's total balance
+  if (data.type === "income") {
+    user.totalBalance += +data.amount;
+  } else if (data.type === "expense") {
+    user.totalBalance -= +data.amount;
   }
   await user.save();
 
-  return await Transaction.create({
-    transaction_type: req.body.transaction_type,
-    category: req.body.category,
-    description: req.body.description,
-    amount: +req.body.amount,
-    date: req.body.date,
-    user: req.user._id,
-  });
+  return transaction;
 };
 
-const updateTransaction = async (req, res) => {
-  const transaction = await Transaction.findById(req.params.id);
-  if (!transaction || transaction.user.toString() !== req.user._id.toString()) {
+const updateTransaction = async (userId, transactionId, data) => {
+  const transaction = await Transaction.findById(transactionId);
+  const user = await User.findById(userId);
+  if (!transaction || transaction.user.toString() !== userId.toString()) {
     res.status(404);
     throw new Error("Transaction not found!");
   }
 
-  if (req.body.amount) {
-    const user = await User.findById(req.user.id);
+  // transaction.type =
+  //   data.type || transaction.type;
+  transaction.category = data.category || transaction.category;
+  transaction.description = data.description || transaction.description;
+  transaction.amount = data.amount || transaction.amount;
+  transaction.date = data.date || transaction.date;
 
-    if (!user) {
+  const category = await Category.findById(data.category);
+  if (data.amount) {
+    if (!category) {
       res.status(404);
-      throw new Error("User not found!");
+      throw new Error("Category not found!");
     }
-
-    if (transaction.transaction_type === "income") {
-      user.totalBalance = +user.totalBalance.toString() - +transaction.amount;
-      user.totalBalance = +user.totalBalance.toString() + +req.body.amount;
-    } else if (req.body.transaction_type === "expense") {
-      user.totalBalance = +user.totalBalance.toString() + +transaction.amount;
-      user.totalBalance = +user.totalBalance.toString() - +req.body.amount;
+    if (data.amount !== undefined) {
+      category.currentAmount =
+        +category.currentAmount.toString() - +transaction.amount;
+      category.currentAmount =
+        +category.currentAmount.toString() + +data.amount;
+      if (data.type === "income") {
+        user.totalBalance = +user.totalBalance.toString() - +transaction.amount;
+        user.totalBalance = +user.totalBalance.toString() + +data.amount;
+      } else if (data.type === "expense") {
+        user.totalBalance = +user.totalBalance.toString() + +transaction.amount;
+        user.totalBalance = +user.totalBalance.toString() - +data.amount;
+      }
     }
-
-    await user.save();
   }
 
-  transaction.transaction_type =
-    req.body.transaction_type || transaction.transaction_type;
-  transaction.category = req.body.category || transaction.category;
-  transaction.description = req.body.description || transaction.description;
-  transaction.amount = req.body.amount || transaction.amount;
-  transaction.date = req.body.date || transaction.date;
-
-  return await transaction.save();
+  const updatedTransaction = await transaction.save();
+  await category.save();
+  await user.save();
+  return updatedTransaction;
 };
 
-const deleteTransaction = async (req, res) => {
+const deleteTransaction = async (userId, transactionId) => {
   const transaction = await Transaction.findOne({
-    _id: req.params.id,
-    user: req.user._id,
+    _id: transactionId,
+    user: userId,
   });
   if (!transaction) {
-    res.status(404);
     throw new Error("Transaction not found!");
   }
 
-  const user = await User.findById(req.user.id);
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found!");
+  const user = await User.findById(userId);
+  const category = await Category.findById(transaction.category);
+  if (!category) {
+    throw new Error("Category not found!");
   }
-
-  if (transaction.transaction_type === "income") {
+  category.currentAmount =
+    +category.currentAmount.toString() - +transaction.amount;
+  if (transaction.type === "income") {
     user.totalBalance = +user.totalBalance.toString() - +transaction.amount;
-  } else if (transaction.transaction_type === "expense") {
+  } else if (transaction.type === "expense") {
     user.totalBalance = +user.totalBalance.toString() + +transaction.amount;
   }
   await user.save();
 
   await Transaction.findOneAndDelete({
-    _id: req.params.id,
-    user: req.user._id,
+    _id: transactionId,
+    user: userId,
   });
 
   return transaction;
@@ -127,7 +156,7 @@ const getMonthlySummary = async (req, res) => {
     },
     {
       $group: {
-        _id: "$transaction_type",
+        _id: "$type",
         totalAmount: { $sum: "$amount" },
       },
     },
